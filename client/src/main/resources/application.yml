@@ -1,0 +1,13 @@
+server:
+  port: ${port:8080}
+
+logging:
+  level:
+    org.springframework.web: WARN
+    com.test: TRACE
+
+rabbitmq:
+  host: localhost
+  exchange:
+    name: logs
+    type: fanout
