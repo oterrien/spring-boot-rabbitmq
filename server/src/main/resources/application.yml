@@ -6,8 +6,16 @@ logging:
     org.springframework.web: WARN
     com.test: TRACE
 
+spring:
+  profiles:
+    active: with-rpc
+
 rabbitmq:
   host: localhost
   exchange:
-    name: logs
-    type: fanout
+    log:
+      name: logs
+      type: fanout
+  queue:
+    rpc:
+      name: rpc_queue

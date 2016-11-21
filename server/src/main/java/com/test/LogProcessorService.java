@@ -5,12 +5,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.io.IOException;
 
-
+@Profile("with-log")
 @Service
 @Slf4j
 public class LogProcessorService{
@@ -18,20 +20,40 @@ public class LogProcessorService{
     @Value("${rabbitmq.host}")
     private String host;
 
-    @Value("${rabbitmq.exchange.name}")
+    @Value("${rabbitmq.exchange.log.name}")
     private String exchangeName;
 
-    @Value("${rabbitmq.exchange.type}")
+    @Value("${rabbitmq.exchange.log.type}")
     private String exchangeType;
+
+    private Connection connection;
+    private Channel channel;
 
     @PostConstruct
     public void init() throws Exception {
-        log.info("LogProcessorService started");
+        log.info("####-LogProcessorService started");
 
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(host);
-        Connection connection = factory.newConnection();
-        Channel channel =  connection.createChannel();
+        connection = factory.newConnection();
+        channel = connection.createChannel();
+
+        consume();
+    }
+
+    @PreDestroy
+    public void tearDown() throws Exception {
+        log.info("####-LogProcessorService stopped");
+        if (channel != null) {
+            channel.close();
+        }
+        if (connection != null) {
+            connection.close();
+        }
+    }
+
+    public void consume() throws Exception {
+
         channel.exchangeDeclare(exchangeName, exchangeType);
         String queueName = channel.queueDeclare().getQueue();
         channel.queueBind(queueName, exchangeName, "");
